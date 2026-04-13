@@ -1,3 +1,4 @@
+const { application } = require("express");
 const mongoose= require("mongoose");
 
 const applicationSchema= new mongoose.Schema({
@@ -29,3 +30,6 @@ coverleter:{
 },
 {timestamps: true}
 );
+
+applicationSchema.index({job:1,application:1},{unique:true});
+module.exports= mongoose.model("Application",applicationSchema);
