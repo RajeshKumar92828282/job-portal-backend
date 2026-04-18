@@ -13,12 +13,12 @@ const jobSchema= new moongoose.Schema(
       type:String
     },
 
-    Location:{
+    location:{
       type:String,
       requred:[true,"location is required"],
 
     },
-    descripition:{
+     description:{
        type:String,
        required:[true,"Job descripiton is required"],
 
@@ -35,10 +35,15 @@ const jobSchema= new moongoose.Schema(
       default:"Full-Time",
     },
 
-    postedby:{
+    postedBy:{
       type:moongoose.Schema.Types.ObjectId,
       ref:"User",
       required:true,
+    },
+    postedByrole:{
+           type:String,
+           enum:["user","admin","recruiter"],
+           required:true,
     },
 },
 {timestamps : true}
