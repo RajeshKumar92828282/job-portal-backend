@@ -15,11 +15,11 @@ const createjob= async (req,res) =>{
       title,
       company,
       location,
-      descripition,
+      description,
       salary,
       type,
-      postedby:req.user._id,
-      postedbyrole:req.user.role,
+      postedBy:req.user._id,
+      postedByrole:req.user.role,
     });
   res.status(201).json({message:"✅ job posted successfully",job})
 
@@ -35,7 +35,7 @@ const createjob= async (req,res) =>{
 const getalljobs= async (req,res) =>{
  try{
    
-  const jobs= (await Job.find().populate("postedby", "name email role")).sort({ createdAt:-1});
+  const jobs= (await Job.find().populate("postedBy", "name email role")).sort({ createdAt:-1});
 
   res.status(200).json({message:"job featched successfully",count:jobs.length,jobs});
 
@@ -62,10 +62,10 @@ try{
          ];
        }
 
-       if(location) filter.location={$regex:q,$options:"i"};
+       if(location) filter.location={$regex:location,$options:"i"};
        if(type) filter.type=type;
 
-        const jobs= await Job.find(filter).populate("postedby","name eamil role").sort({createdAt:-1});
+        const jobs= await Job.find(filter).populate("postedBy","name email role").sort({createdAt:-1});
 
         res.status(200).json({message:"search result",count:jobs.length,jobs});
 }catch(error){
@@ -77,7 +77,7 @@ try{
 const  getMyPostedJobs = async (req,res) =>{
       try{
 
-     const jobs= (await Job.find({postedby:req.user._id})).sort({createdAt:-1});
+     const jobs= (await Job.find({postedBy:req.user._id})).sort({createdAt:-1});
      res.status(200).json({message:"your posted job fetched sucessfully",count:jobs.length,jobs});
 
       }catch(error){
@@ -90,7 +90,7 @@ const getJobById = async (req,res) =>{
 
   try{
    
-  const job= await Job.findById(req.params.id).populate("postedby","name email role");
+  const job= await Job.findById(req.params.id).populate("postedBy","name email role");
 
   if(!job) return res.status(404).json({message:"job not found"});
 
@@ -111,7 +111,7 @@ const updatejob= async (req,res)=>{
 
 
     const isAdmin= req.user.role=== "admin";
-    const isOwner= job.postedby.toString() === req.user._id.toString();
+    const isOwner= job.postedBy.toString() === req.user._id.toString();
 
 
     if(!isAdmin && !isOwner){
@@ -130,6 +130,29 @@ const updatejob= async (req,res)=>{
 
 const deletejob =async (req,res) => {
     
+  try{
+
+    const job= await Job.findById(req.params.id);
+    if(!job) return res.status(404).json({message:"job not found"});
+
+    const isAdmin= req.user.role === "admin";
+    const isOwner = job.postedBy.toString() === req.user._id.toString();
+
+    if(!isAdmin && !isOwner){
+      return res.status(403).json({message:" Not authorized to delete this job"});
+    }
+
+ await job.deleteOne();
+ res.status(200).json({message:"job delete successfully"});
+
+
+  }catch(error){
+
+      res.status(500).json({message:"server error",error:error.message});
+
+  }
+
+
 };
 
 module.exports={createjob,getalljobs,searchalljobs,getMyPostedJobs,getJobById,updatejob,deletejob};
