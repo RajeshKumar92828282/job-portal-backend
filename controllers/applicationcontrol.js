@@ -123,13 +123,29 @@ const  getMyApplications= async (req,res) =>{
 
         }catch(error){
              res.status(500).json({message:"server error", error:error.message});
-
+     
         }
         };
 
       const  withdrawApplication= async (req,res)=>{
 
   try{
+    const application = await Application.findById(req.user.params);
+
+    if(!application){
+      return res.status(404).json({message:"application not found"});
+    }
+
+    if(application.application.toString() !== req.user._id.toString()){
+      return res.status(400).json({message:"Not authorized to withdraw this application"});
+    }
+
+    if(application === "Accepted"){
+      return res.status(400).json({message:" Cannot withdraw an accepted application"});
+    }
+    await application.deleteOne();
+
+    res.status(200).json({message:"application withdrew successfulyy"});
   
   }catch(error){
      res.status(500).json({message:"server error", error:error.message});
