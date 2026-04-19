@@ -1,3 +1,4 @@
+const { application } = require("express");
 const Application= require("../models/Application");
 const Job = require("../models/Job");
 const Job= require("../models/Job");
@@ -20,8 +21,21 @@ try{
     return res.status(403).json({message:"admin and recruiter cannot be apply job"});
  }
 
+  //check if the already applied
+  const alreadyapplyjob= await  Application.findOne({job:JobId,application:req.user._id,});
 
-  const applyjob=
+  if(alreadyapplyjob){
+    return res.status(400).json({message:"you already apply for this job"});
+  }
+
+//create application
+const application = await Application.create({job:JobId,application:req.user._id,CoverLetter});
+
+res.status(201).json({message:"application submitted successfully",application});
+
+
+await application.populate("job","title company location");
+await application.populate("application","name email");
 
 }catch(error){
     res.status(500).json({message:"server error", error:error.message});
@@ -30,6 +44,19 @@ try{
 };
 
 const  getMyApplications= async (req,res) =>{
+
+  try{
+  const application= await Application.find({application:req.user._id})
+  .populate("job","title company location type salary").sort({createdAt: -1});
+  
+  res.status(200).json({message:"your application featch succesfully",count:application.length,application});
+
+    
+  }catch(error){
+   res.status(500).json({message:"server error", error:error.message});
+  }
+
+
 
 };
 
