@@ -90,9 +90,51 @@ const  getMyApplications= async (req,res) =>{
 
         const  updateApplicationsStatus= async (req,res) =>{
 
+        try{
+        const {status}= req.body;
+       const validstatus= ["Pending","Reviewed","Rejected","Accepted"];
+
+       if(!validstatus.includes(status)){
+        return res.status(400).json({message:"invalids status value"});
+       }
+  
+       const application = await Application.findById(req.params.id).populate("jon");
+
+       if(!application){
+        return res.status(404).json({message:"application not found"}); 
+       }
+
+           const isAdmin= req.user.role === "admin";
+           const isOwner= job.postedBy.toString() === req.user._id.toString();
+           
+           if(!isAdmin && !isOwner){
+             return res.status(403).json({message:" Not authorized to view these applications"});
+           }
+
+   application.status = status;
+   await application.save();
+
+   res.status(200).json({message:`application status updated to "${status} "`,application});
+
+
+
+
+
+
+        }catch(error){
+             res.status(500).json({message:"server error", error:error.message});
+
+        }
         };
 
       const  withdrawApplication= async (req,res)=>{
+
+  try{
+  
+  }catch(error){
+     res.status(500).json({message:"server error", error:error.message});
+
+  }
 
       };
 
