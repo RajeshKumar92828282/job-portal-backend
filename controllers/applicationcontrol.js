@@ -1,7 +1,7 @@
 const { application } = require("express");
 const Application= require("../models/Application");
 const Job = require("../models/Job");
-const Job= require("../models/Job");
+
 
 const applyForJob = async (req,res) =>{
  
@@ -22,20 +22,20 @@ try{
  }
 
   //check if the already applied
-  const alreadyapplyjob= await  Application.findOne({job:JobId,application:req.user._id,});
+  const alreadyapplyjob= await  Application.findOne({job:JobId,applicant:req.user._id,});
 
   if(alreadyapplyjob){
     return res.status(400).json({message:"you already apply for this job"});
   }
 
 //create application
-const application = await Application.create({job:JobId,application:req.user._id,CoverLetter});
+const application = await Application.create({job:JobId,applicant:req.user._id,coverLetter:CoverLetter});
 
 res.status(201).json({message:"application submitted successfully",application});
 
 
 await application.populate("job","title company location");
-await application.populate("application","name email");
+await application.populate("applicant","name email");
 
 }catch(error){
     res.status(500).json({message:"server error", error:error.message});
@@ -46,7 +46,7 @@ await application.populate("application","name email");
 const  getMyApplications= async (req,res) =>{
 
   try{
-  const application= await Application.find({application:req.user._id})
+  const application= await Application.find({applicant:req.user._id})
   .populate("job","title company location type salary").sort({createdAt: -1});
   
   res.status(200).json({message:"your application featch succesfully",count:application.length,application});
@@ -92,17 +92,21 @@ const  getMyApplications= async (req,res) =>{
 
         try{
         const {status}= req.body;
+        
+const job = await Job.findById(application.job);
+
        const validstatus= ["Pending","Reviewed","Rejected","Accepted"];
 
        if(!validstatus.includes(status)){
         return res.status(400).json({message:"invalids status value"});
        }
   
-       const application = await Application.findById(req.params.id).populate("jon");
+       const application = await Application.findById(req.params.id).populate("job");
 
        if(!application){
         return res.status(404).json({message:"application not found"}); 
        }
+       const job = await Job.findById(application.job);
 
            const isAdmin= req.user.role === "admin";
            const isOwner= job.postedBy.toString() === req.user._id.toString();
@@ -130,22 +134,22 @@ const  getMyApplications= async (req,res) =>{
       const  withdrawApplication= async (req,res)=>{
 
   try{
-    const application = await Application.findById(req.user.params);
+    const application = await Application.findById(req.params.id);
 
     if(!application){
       return res.status(404).json({message:"application not found"});
     }
 
-    if(application.application.toString() !== req.user._id.toString()){
+    if(application.applicant.toString() !== req.user._id.toString()){
       return res.status(400).json({message:"Not authorized to withdraw this application"});
     }
 
-    if(application === "Accepted"){
+    if(application.status === "Accepted"){
       return res.status(400).json({message:" Cannot withdraw an accepted application"});
     }
     await application.deleteOne();
 
-    res.status(200).json({message:"application withdrew successfulyy"});
+    res.status(200).json({message:"application withdrew successfully"});
   
   }catch(error){
      res.status(500).json({message:"server error", error:error.message});
