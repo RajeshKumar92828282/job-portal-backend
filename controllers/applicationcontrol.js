@@ -56,12 +56,35 @@ const  getMyApplications= async (req,res) =>{
    res.status(500).json({message:"server error", error:error.message});
   }
 
-
-
 };
 
    
         const getApplicationsForJob = async (req,res)=>{
+
+
+          try{
+
+            const {JobId} = req.params;
+            const job= await Job.findById(JobId);
+            if(!job){
+              return res.status(404).json({message:"job not found"});
+            }
+
+
+            const isAdmin = req.user.role === "admin";
+            const isOwner= job.postedBy.toString() === req.user._id.toString();
+
+            if(!isAdmin && !isOwner ){
+              return res.status(403).json({message:" Not authorized to view these applications"});
+            }
+            const application = await Application.find({job:JobId})
+            .populate("application", "name email").sort({createdAt: -1});
+
+            res.status(200).json({message:"application featched successfully",count:application.length,application});
+
+          }catch(error){
+              res.status(500).json({message:"server error", error:error.message});
+          }
 
         };
 
